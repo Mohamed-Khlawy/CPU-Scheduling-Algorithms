@@ -1,0 +1,11 @@
+C:\Users\Lenovo\Desktop\Operating System\Section\OS_Project 2\OS_Project 2\bin\Debug\OS_Project 2.exe.config
+C:\Users\Lenovo\Desktop\Operating System\Section\OS_Project 2\OS_Project 2\bin\Debug\OS_Project 2.exe
+C:\Users\Lenovo\Desktop\Operating System\Section\OS_Project 2\OS_Project 2\bin\Debug\OS_Project 2.pdb
+C:\Users\Lenovo\Desktop\Operating System\Section\OS_Project 2\OS_Project 2\obj\Debug\OS_Project 2.csproj.AssemblyReference.cache
+C:\Users\Lenovo\Desktop\Operating System\Section\OS_Project 2\OS_Project 2\obj\Debug\OS_Project 2.csproj.SuggestedBindingRedirects.cache
+C:\Users\Lenovo\Desktop\Operating System\Section\OS_Project 2\OS_Project 2\obj\Debug\OS_Project_2.Form1.resources
+C:\Users\Lenovo\Desktop\Operating System\Section\OS_Project 2\OS_Project 2\obj\Debug\OS_Project_2.Properties.Resources.resources
+C:\Users\Lenovo\Desktop\Operating System\Section\OS_Project 2\OS_Project 2\obj\Debug\OS_Project 2.csproj.GenerateResource.cache
+C:\Users\Lenovo\Desktop\Operating System\Section\OS_Project 2\OS_Project 2\obj\Debug\OS_Project 2.csproj.CoreCompileInputs.cache
+C:\Users\Lenovo\Desktop\Operating System\Section\OS_Project 2\OS_Project 2\obj\Debug\OS_Project 2.exe
+C:\Users\Lenovo\Desktop\Operating System\Section\OS_Project 2\OS_Project 2\obj\Debug\OS_Project 2.pdb

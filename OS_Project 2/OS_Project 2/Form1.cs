@@ -77,14 +77,14 @@ namespace OS_Project_2
             }
         }
 
-        private int[,] SortByBurstTime_CurrentTime(int[,] processes, int currentTime, int counter)
+        private int[,] SortByBurstTime_CurrentTime(int[,] processes, int currentTime)
         {
             //int rowCount = processes.GetLength(0);
             int[,] arrivedProcesses = new int[processes.GetLength(0), 3];
             int n = processes.GetLength(0);
             int z = 0;
 
-            for (int i = counter; i < n; i++)
+            for (int i = 0; i < n; i++)
             {
                 if (processes[i, 1] <= currentTime)
                 {
@@ -92,7 +92,8 @@ namespace OS_Project_2
                     arrivedProcesses[z, 1] = processes[i, 1];
                     arrivedProcesses[z, 2] = processes[i, 2];
                     z++;
-                    //processes = RemoveProcess(processes, i); // set the values of the row to -1
+                    // هحذف الصف بكل قيمه الى طلع اول صف بعد فنكشن السورت عشان اللفة الجاية اشتغل من غيره
+                    //processes = RemoveProcess(processes, i); 
                     //i--; // decrement i to process the same row again if necessary
                     //n--; // decrement n since the array is now one row shorter
 
@@ -111,17 +112,37 @@ namespace OS_Project_2
                     //    }
                     //}
                 }
-            }
-            int[,] updated_arrivedProcesses = new int[z, 3];
-            for (int i = 0; i < z; i++)
-            {
-                updated_arrivedProcesses[i, 0] = arrivedProcesses[i, 0]; //i + counter;
-                updated_arrivedProcesses[i, 1] = arrivedProcesses[i, 1];
-                updated_arrivedProcesses[i, 2] = arrivedProcesses[i, 2];
+                
             }
 
-            SortByBurstTime(updated_arrivedProcesses);
-            return updated_arrivedProcesses;
+            if (arrivedProcesses[0, 2] != 0)
+            {
+                int[,] updated_arrivedProcesses = new int[z, 3];
+                for (int i = 0; i < z; i++)
+                {
+                    updated_arrivedProcesses[i, 0] = arrivedProcesses[i, 0]; //i + counter;
+                    updated_arrivedProcesses[i, 1] = arrivedProcesses[i, 1];
+                    updated_arrivedProcesses[i, 2] = arrivedProcesses[i, 2];
+                }
+
+                SortByBurstTime(updated_arrivedProcesses);
+
+                int[,] last_updated_arrivedProcesses = new int[1, 3];
+                last_updated_arrivedProcesses[0, 0] = updated_arrivedProcesses[0, 0];
+                last_updated_arrivedProcesses[0, 1] = updated_arrivedProcesses[0, 1];
+                last_updated_arrivedProcesses[0, 2] = updated_arrivedProcesses[0, 2];
+
+                //int ProcessToRemove = last_updated_arrivedProcesses[0, 0];
+                //هحذف الصف بكل قيمه الى طلع اول صف بعد فنكشن السورت عشان اللفة الجاية اشتغل من غيره
+                //processes = RemoveProcess(processes, ProcessToRemove);
+
+                return last_updated_arrivedProcesses;
+            }
+
+            else
+            {
+                return arrivedProcesses;
+            }
         }
 
         // افتراض المصفوفة مرتبة بالفعل بناءً على Arrival Time
@@ -313,25 +334,38 @@ namespace OS_Project_2
             int[,] SJFnp_copy_Processes = processes;
             int[,] SortedProcesses = new int[processes.GetLength(0), processes.GetLength(1)];
             int n = SJFnp_copy_Processes.GetLength(0);
-            int counter = 0;
+            int numberOfIdealTime = 0;
+            int ProcessToRemove;
+            
             for (int i = 0; i < n; i++)
             {
-                int[,] arrivedProcesses = SortByBurstTime_CurrentTime(SJFnp_copy_Processes, currentTime, counter);
+                int[,] arrivedProcesses = SortByBurstTime_CurrentTime(SJFnp_copy_Processes, currentTime);
 
-                for (int j = 0; j < arrivedProcesses.GetLength(0); j++)
+                if (arrivedProcesses[0, 2] != 0)
                 {
-                    SortedProcesses[j + i, 0] = arrivedProcesses[j, 0];
-                    SortedProcesses[j + i, 1] = arrivedProcesses[j, 1];
-                    SortedProcesses[j + i, 2] = arrivedProcesses[j, 2];
-                    currentTime += SortedProcesses[j + i, 2];     //arrivedProcesses[j, 2];
-                    counter++;
+                    for (int j = 0; j < arrivedProcesses.GetLength(0); j++)
+                    {
+                        SortedProcesses[j + i, 0] = arrivedProcesses[j, 0];
+                        SortedProcesses[j + i, 1] = arrivedProcesses[j, 1];
+                        SortedProcesses[j + i, 2] = arrivedProcesses[j, 2];
+                        currentTime += SortedProcesses[j + i, 2];     //arrivedProcesses[j, 2];
+                    }
                 }
 
-                //if (currentTime == 0)
-                //{
-                //    currentTime++;
-                //    i--;
-                //}
+                if (SJFnp_copy_Processes.GetLength(0) != 1)
+                {
+                    ProcessToRemove = SortedProcesses[i, 0];
+                    //هشيل الصف الى دخل الSortedProcesses دلوقتى بس من المصفوفة الاساسية ال SJF بحيث المرة الجاية اشتغل من غيرها
+                    SJFnp_copy_Processes = RemoveProcess(SJFnp_copy_Processes, ProcessToRemove);
+                }
+
+                if (arrivedProcesses[0, 2] == 0)
+                {
+                    currentTime += SJFnp_copy_Processes[0, 1] - currentTime;
+                    numberOfIdealTime++;
+                    i--;
+                }
+
             }
 
             int processCount = SortedProcesses.GetLength(0);
@@ -350,14 +384,11 @@ namespace OS_Project_2
             SchedulerTable.ColumnCount = processCount;
             SchedulerTable.RowCount = 1;
 
-            //int numberOfIdealTime = 0;
-
-
-            //if (SortedProcesses[0, 1] != 0)
-            //{
-            //    numberOfIdealTime++;
-            //    IdealInformation.Text += "\n 1 => Before P0";
-            //}
+            if (SortedProcesses[0, 1] != 0)
+            {
+                numberOfIdealTime++;
+                IdealInformation.Text += "\n 1 => Before P0";
+            }
 
             // إضافة الـ Labels للـ TableLayoutPanel على أساس الترتيب الجديد
             for (int i = 0; i < processCount; i++)
@@ -367,6 +398,51 @@ namespace OS_Project_2
                 label.Dock = DockStyle.Fill;
                 label.TextAlign = ContentAlignment.MiddleCenter;
                 SchedulerTable.Controls.Add(label, i, 0);
+            }
+
+            // حساب waitingTime و finishTime و turnAround لكل عملية
+            int n_Sorted = SortedProcesses.GetLength(0);
+            int[] waitingTime = new int[n];
+            int[] finishTime = new int[n];
+            int[] turnAroundTime = new int[n];
+
+            // حساب waitingTime و finishTime لكل عملية
+            waitingTime[0] = 0;
+            finishTime[0] = SortedProcesses[0, 1] + SortedProcesses[0, 2];
+            turnAroundTime[0] = finishTime[0] - SortedProcesses[0, 1];
+            int counter_Sorted = 0;
+
+            for (int i = 1; i < n_Sorted; i++)
+            {
+                if ((finishTime[i - 1] + counter_Sorted) >= SortedProcesses[i, 1])
+                {
+                    waitingTime[i] = (finishTime[i - 1] + counter_Sorted) - SortedProcesses[i, 1];
+                    finishTime[i] = (finishTime[i - 1] + counter_Sorted) + SortedProcesses[i, 2];
+                    turnAroundTime[i] = finishTime[i] - SortedProcesses[i, 1];
+                    counter_Sorted = 0;
+                }
+                else
+                {
+                    counter_Sorted += SortedProcesses[i, 1] - finishTime[i - 1];
+                    i--;
+                    //numberOfIdealTime++;
+                    IdealInformation.Text += $"\n {numberOfIdealTime} => Between P{SortedProcesses[i, 0]} and P{SortedProcesses[i + 1, 0]}";
+                }
+            }
+
+            // حساب متوسط ​​وقت الانتظار لجميع العمليات
+            double avgWaitingTime = waitingTime.Average();
+            double avgTurnaroundTime = turnAroundTime.Average();
+
+            AvgWaiting.Text = avgWaitingTime.ToString() + "ms";
+            AvgTurnaround.Text = avgTurnaroundTime.ToString() + "ms";
+            if (numberOfIdealTime != 0)
+            {
+                IdealInformation.Text += $"\n Total Ideal Times = {numberOfIdealTime.ToString()}";
+            }
+            else
+            {
+                IdealInformation.Text += "\n There Is No Ideal Times!!";
             }
         }
         

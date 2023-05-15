@@ -20,6 +20,15 @@ namespace OS_Project_2
             InitializeComponent();
             btnRR.Enabled = false;
         }
+
+        //Reset Scheduler 
+        private void Reset_Scheduler()
+        {
+            SchedulerTable.Controls.Clear();
+            AvgWaiting.Text = "0ms";
+            AvgTurnaround.Text = "0ms";
+            IdealInformation.Text = "Information about CPU Ideal Time";
+        }
         private int[,] RemoveProcess(int[,] processes, int rowIndex)
         {
             int index = 0;
@@ -36,10 +45,6 @@ namespace OS_Project_2
                 }
             }
             return newProcesses;
-            //for (int j = 0; j < processes.GetLength(1); j++)
-            //{
-            //    processes[rowIndex, j] = -1; // set the values of the row to -1
-            //}
         }
 
         // افتراض المصفوفة مرتبة بالفعل بناءً على Burst Time
@@ -77,9 +82,8 @@ namespace OS_Project_2
             }
         }
 
-        private int[,] SortByBurstTime_CurrentTime(int[,] processes, int currentTime)
+        private void ArrivedProcesses_AtThis_CurrentTime(int[,]processes,int currentTime)
         {
-            //int rowCount = processes.GetLength(0);
             int[,] arrivedProcesses = new int[processes.GetLength(0), 3];
             int n = processes.GetLength(0);
             int z = 0;
@@ -92,25 +96,68 @@ namespace OS_Project_2
                     arrivedProcesses[z, 1] = processes[i, 1];
                     arrivedProcesses[z, 2] = processes[i, 2];
                     z++;
-                    // هحذف الصف بكل قيمه الى طلع اول صف بعد فنكشن السورت عشان اللفة الجاية اشتغل من غيره
-                    //processes = RemoveProcess(processes, i); 
-                    //i--; // decrement i to process the same row again if necessary
-                    //n--; // decrement n since the array is now one row shorter
+                }
 
-                    //int currentProcess = arrivedProcesses[i, 0];
-                    //int[,] newProcesses = new int[processes.GetLength(0) - 1, processes.GetLength(1)];
-                    //int index = 0;
-                    //for (int x = 0; x < processes.GetLength(0); x++)
-                    //{
-                    //    if (processes[x, 0] != currentProcess)
-                    //    {
-                    //        for (int j = 0; j < processes.GetLength(1); j++)
-                    //        {
-                    //            newProcesses[index, j] = processes[x, j];
-                    //        }
-                    //        index++;
-                    //    }
-                    //}
+            }
+        }
+
+        private int[,] SortByBurstTime_CurrentTime_SJFp(int[,] processes, int currentTime)
+        {
+            int[,] arrivedProcesses = new int[processes.GetLength(0), 3];
+            int n = processes.GetLength(0);
+            int z = 0;
+
+            for (int i = 0; i < n; i++)
+            {
+                if (processes[i, 1] <= currentTime)
+                {
+                    arrivedProcesses[z, 0] = processes[i, 0];
+                    arrivedProcesses[z, 1] = processes[i, 1];
+                    arrivedProcesses[z, 2] = processes[i, 2];
+                    z++;
+                }
+
+            }
+
+            if (arrivedProcesses[0, 2] != 0)
+            {
+                int[,] updated_arrivedProcesses = new int[z, 3];
+                for (int i = 0; i < z; i++)
+                {
+                    updated_arrivedProcesses[i, 0] = arrivedProcesses[i, 0]; //i + counter;
+                    updated_arrivedProcesses[i, 1] = arrivedProcesses[i, 1];
+                    updated_arrivedProcesses[i, 2] = arrivedProcesses[i, 2];
+                }
+
+                SortByBurstTime(updated_arrivedProcesses);
+                int[,] last_updated_arrivedProcesses = new int[1, 3];
+                last_updated_arrivedProcesses[0, 0] = updated_arrivedProcesses[0, 0];
+                last_updated_arrivedProcesses[0, 1] = updated_arrivedProcesses[0, 1];
+                last_updated_arrivedProcesses[0, 2] = updated_arrivedProcesses[0, 2];
+
+                return last_updated_arrivedProcesses;
+            }
+
+            else
+            {
+                return arrivedProcesses;
+            }
+        }
+
+        private int[,] SortByBurstTime_CurrentTime_SJFnp(int[,] processes, int currentTime)
+        {
+            int[,] arrivedProcesses = new int[processes.GetLength(0), 3];
+            int n = processes.GetLength(0);
+            int z = 0;
+
+            for (int i = 0; i < n; i++)
+            {
+                if (processes[i, 1] <= currentTime)
+                {
+                    arrivedProcesses[z, 0] = processes[i, 0];
+                    arrivedProcesses[z, 1] = processes[i, 1];
+                    arrivedProcesses[z, 2] = processes[i, 2];
+                    z++;
                 }
                 
             }
@@ -131,10 +178,6 @@ namespace OS_Project_2
                 last_updated_arrivedProcesses[0, 0] = updated_arrivedProcesses[0, 0];
                 last_updated_arrivedProcesses[0, 1] = updated_arrivedProcesses[0, 1];
                 last_updated_arrivedProcesses[0, 2] = updated_arrivedProcesses[0, 2];
-
-                //int ProcessToRemove = last_updated_arrivedProcesses[0, 0];
-                //هحذف الصف بكل قيمه الى طلع اول صف بعد فنكشن السورت عشان اللفة الجاية اشتغل من غيره
-                //processes = RemoveProcess(processes, ProcessToRemove);
 
                 return last_updated_arrivedProcesses;
             }
@@ -239,6 +282,8 @@ namespace OS_Project_2
 
         private void btnFCFS_Click(object sender, EventArgs e)
         {
+            Reset_Scheduler();
+
             int[,] FCFS_copy_processes = processes;
             SortByArrivalTime(FCFS_copy_processes);
 
@@ -325,11 +370,155 @@ namespace OS_Project_2
 
         private void btnSJFp_Click(object sender, EventArgs e)
         {
-            
+            Reset_Scheduler();
+            int currentTime = processes[0, 1];
+            int[,] SJFp_copy_Processes = processes;
+            int[,] SortedProcesses; 
+            int n = SJFp_copy_Processes.GetLength(0);
+            int numberOfIdealTime = 0;
+            int ProcessToRemove;
+            int FirstArrivalTime = SJFp_copy_Processes[0, 1];
+            bool allArrivalSame = true;
+
+            for (int i = 1; i < n; i++)
+            {
+                if (FirstArrivalTime == SJFp_copy_Processes[i, 1])
+                {
+                    continue;
+                }
+                else
+                {
+                    allArrivalSame = false;
+                    break;
+                }
+            }
+
+            if (allArrivalSame)
+            {
+                SortedProcesses = new int[processes.GetLength(0), processes.GetLength(1)];
+                for (int i = 0; i < n; i++)
+                {
+                    int[,] arrivedProcesses = SortByBurstTime_CurrentTime_SJFnp(SJFp_copy_Processes, currentTime);
+
+                    if (arrivedProcesses[0, 2] != 0)
+                    {
+                        for (int j = 0; j < arrivedProcesses.GetLength(0); j++)
+                        {
+                            SortedProcesses[j + i, 0] = arrivedProcesses[j, 0];
+                            SortedProcesses[j + i, 1] = arrivedProcesses[j, 1];
+                            SortedProcesses[j + i, 2] = arrivedProcesses[j, 2];
+                            currentTime += SortedProcesses[j + i, 2];     //arrivedProcesses[j, 2];
+                        }
+                    }
+
+                    if (SJFp_copy_Processes.GetLength(0) != 1)
+                    {
+                        ProcessToRemove = SortedProcesses[i, 0];
+                        //هشيل الصف الى دخل الSortedProcesses دلوقتى بس من المصفوفة الاساسية ال SJF بحيث المرة الجاية اشتغل من غيرها
+                        SJFp_copy_Processes = RemoveProcess(SJFp_copy_Processes, ProcessToRemove);
+                    }
+
+                    if (arrivedProcesses[0, 2] == 0)
+                    {
+                        currentTime += SJFp_copy_Processes[0, 1] - currentTime;
+                        numberOfIdealTime++;
+                        i--;
+                    }
+
+                }
+            }
+
+            else
+            {
+                SortedProcesses = new int[processes.GetLength(0)+20, processes.GetLength(1)]; //+20 احتياطى للعمليات الى هتطلع وتدخل
+                int i = 0;
+                while (SJFp_copy_Processes.GetLength(0) >= 1)
+                {
+                    int[,] arrivedProcesses = SortByBurstTime_CurrentTime_SJFp(SJFp_copy_Processes, currentTime);
+                    if (arrivedProcesses[0, 2] != 0)
+                    {
+
+                        for (int j = 0; j < arrivedProcesses.GetLength(0); j++)
+                        {
+
+                            if (i == 0)
+                            {
+                                SortedProcesses[j + i, 0] = arrivedProcesses[j, 0];
+                                SortedProcesses[j + i, 1] = arrivedProcesses[j, 1];
+                                SortedProcesses[j + i, 2] = arrivedProcesses[j, 2];
+                                currentTime += 1;     //SortedProcesses[j + i, 2];      //arrivedProcesses[j, 2];
+                            }
+                            else
+                            {
+                                if (SortedProcesses[j + i - 1, 0] != arrivedProcesses[j, 0])
+                                {
+                                    SortedProcesses[j + i, 0] = arrivedProcesses[j, 0];
+                                    SortedProcesses[j + i, 1] = arrivedProcesses[j, 1];
+                                    SortedProcesses[j + i, 2] = arrivedProcesses[j, 2];
+                                    currentTime += 1;     //SortedProcesses[j + i, 2];      //arrivedProcesses[j, 2];
+                                }
+                                else
+                                {
+                                    currentTime += 1;
+                                    break;
+                                }
+                            }
+                        }
+                    }
+
+                    if (SJFp_copy_Processes.GetLength(0) != 1 && SortedProcesses[i,2]==1)
+                    {
+                        ProcessToRemove = SortedProcesses[i, 0];
+                        //هشيل الصف الى دخل الSortedProcesses دلوقتى بس من المصفوفة الاساسية ال SJF بحيث المرة الجاية اشتغل من غيرها
+                        SJFp_copy_Processes = RemoveProcess(SJFp_copy_Processes, ProcessToRemove);
+                    }
+                    if (SJFp_copy_Processes.GetLength(0) != 1 && SortedProcesses[i, 2] > 1)
+                    {
+                        SJFp_copy_Processes[i, 2]--;
+                        SortedProcesses[i, 2]--;
+                    }
+
+                    //i++;
+
+                }
+            }
+
+            int processCount = SortedProcesses.GetLength(0);
+
+            // إنشاء مصفوفة لحفظ أسماء العمليات في الترتيب الجديد
+            string[] processNames = new string[processCount];
+
+            // حفظ أسماء العمليات في الترتيب الجديد
+            for (int i = 0; i < processCount; i++)
+            {
+                processNames[i] = "Process " + SortedProcesses[i, 0].ToString(); //$"{i}";
+            }
+
+            SchedulerTable.Controls.Clear();
+
+            SchedulerTable.ColumnCount = processCount;
+            SchedulerTable.RowCount = 1;
+
+            if (SortedProcesses[0, 1] != 0)
+            {
+                numberOfIdealTime++;
+                IdealInformation.Text += "\n 1 => Before P0";
+            }
+
+            // إضافة الـ Labels للـ TableLayoutPanel على أساس الترتيب الجديد
+            for (int i = 0; i < processCount; i++)
+            {
+                Label label = new Label();
+                label.Text = processNames[i];
+                label.Dock = DockStyle.Fill;
+                label.TextAlign = ContentAlignment.MiddleCenter;
+                SchedulerTable.Controls.Add(label, i, 0);
+            }
         }
 
         private void btnSJFnp_Click(object sender, EventArgs e)
         {
+            Reset_Scheduler();
             int currentTime = processes[0, 1];
             int[,] SJFnp_copy_Processes = processes;
             int[,] SortedProcesses = new int[processes.GetLength(0), processes.GetLength(1)];
@@ -339,7 +528,7 @@ namespace OS_Project_2
             
             for (int i = 0; i < n; i++)
             {
-                int[,] arrivedProcesses = SortByBurstTime_CurrentTime(SJFnp_copy_Processes, currentTime);
+                int[,] arrivedProcesses = SortByBurstTime_CurrentTime_SJFnp(SJFnp_copy_Processes, currentTime);
 
                 if (arrivedProcesses[0, 2] != 0)
                 {
@@ -448,7 +637,7 @@ namespace OS_Project_2
         
         private void btnRR_Click(object sender, EventArgs e)
         {
-            
+            Reset_Scheduler();
         }
 
         private void txtQuantum_TextChanged(object sender, EventArgs e)
@@ -513,10 +702,7 @@ namespace OS_Project_2
 
         private void btnScheduleReset_Click(object sender, EventArgs e)
         {
-            SchedulerTable.Controls.Clear();
-            AvgWaiting.Text = "0ms";
-            AvgTurnaround.Text = "0ms";
-            IdealInformation.Text = "Information about CPU Ideal Time";
+            Reset_Scheduler();
         }
 
     }

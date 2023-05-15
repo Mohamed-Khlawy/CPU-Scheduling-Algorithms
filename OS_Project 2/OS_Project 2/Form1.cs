@@ -5,6 +5,7 @@ using System.Data;
 using System.Diagnostics;
 using System.Drawing;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
@@ -28,6 +29,37 @@ namespace OS_Project_2
             AvgWaiting.Text = "0ms";
             AvgTurnaround.Text = "0ms";
             IdealInformation.Text = "Information about CPU Ideal Time";
+        }
+
+        private int[,] ProcessNameToEqualMinus1(int[,]processes, int rowIndex)
+        {
+            for (int x = 0; x < processes.GetLength(0); x++)
+            {
+                if (processes[x, 0] == rowIndex)
+                {
+                    processes[x, 0] = -1;
+                }
+            }
+            return processes;
+        }
+
+        private int[,] SubtractOneFromProcess(int[,]processes, int rowIndex)
+        {
+            if (processes[rowIndex, 0] == -1)
+            {
+                return processes;
+            }
+            else
+            {
+                for (int x = 0; x < processes.GetLength(0); x++)
+                {
+                    if (processes[x, 0] == rowIndex)
+                    {
+                        processes[x, 2] -= 1;
+                    }
+                }
+                return processes;
+            }
         }
         private int[,] RemoveProcess(int[,] processes, int rowIndex)
         {
@@ -109,7 +141,7 @@ namespace OS_Project_2
 
             for (int i = 0; i < n; i++)
             {
-                if (processes[i, 1] <= currentTime)
+                if (processes[i, 1] <= currentTime && processes[i, 0] != -1)
                 {
                     arrivedProcesses[z, 0] = processes[i, 0];
                     arrivedProcesses[z, 1] = processes[i, 1];
@@ -374,11 +406,15 @@ namespace OS_Project_2
             int currentTime = processes[0, 1];
             int[,] SJFp_copy_Processes = processes;
             int[,] SortedProcesses; 
+            int[,] RealSortedProcesses; 
             int n = SJFp_copy_Processes.GetLength(0);
             int numberOfIdealTime = 0;
             int ProcessToRemove;
+            int ProcessToSubtract;
             int FirstArrivalTime = SJFp_copy_Processes[0, 1];
+            int LastProcessesNumber = 0;
             bool allArrivalSame = true;
+            bool ProcessesFinished;
 
             for (int i = 1; i < n; i++)
             {
@@ -432,7 +468,7 @@ namespace OS_Project_2
             {
                 SortedProcesses = new int[processes.GetLength(0)+20, processes.GetLength(1)]; //+20 احتياطى للعمليات الى هتطلع وتدخل
                 int i = 0;
-                while (SJFp_copy_Processes.GetLength(0) >= 1)
+                while ( true )   //SJFp_copy_Processes.GetLength(0) >= 1)
                 {
                     int[,] arrivedProcesses = SortByBurstTime_CurrentTime_SJFp(SJFp_copy_Processes, currentTime);
                     if (arrivedProcesses[0, 2] != 0)
@@ -441,17 +477,19 @@ namespace OS_Project_2
                         for (int j = 0; j < arrivedProcesses.GetLength(0); j++)
                         {
 
-                            if (i == 0)
+                            if (i == 0 && currentTime == 0)
                             {
                                 SortedProcesses[j + i, 0] = arrivedProcesses[j, 0];
                                 SortedProcesses[j + i, 1] = arrivedProcesses[j, 1];
                                 SortedProcesses[j + i, 2] = arrivedProcesses[j, 2];
                                 currentTime += 1;     //SortedProcesses[j + i, 2];      //arrivedProcesses[j, 2];
+                                //i++;
                             }
                             else
                             {
-                                if (SortedProcesses[j + i - 1, 0] != arrivedProcesses[j, 0])
+                                if (SortedProcesses[j + i, 0] != arrivedProcesses[j, 0])
                                 {
+                                    i++;
                                     SortedProcesses[j + i, 0] = arrivedProcesses[j, 0];
                                     SortedProcesses[j + i, 1] = arrivedProcesses[j, 1];
                                     SortedProcesses[j + i, 2] = arrivedProcesses[j, 2];
@@ -466,24 +504,69 @@ namespace OS_Project_2
                         }
                     }
 
-                    if (SJFp_copy_Processes.GetLength(0) != 1 && SortedProcesses[i,2]==1)
+                    ProcessToRemove = SortedProcesses[i, 0];
+                    ProcessToSubtract = SortedProcesses[i, 0];
+                    if (SJFp_copy_Processes.GetLength(0) != 1 && SJFp_copy_Processes[ProcessToRemove, 2] == 1)
                     {
-                        ProcessToRemove = SortedProcesses[i, 0];
+
                         //هشيل الصف الى دخل الSortedProcesses دلوقتى بس من المصفوفة الاساسية ال SJF بحيث المرة الجاية اشتغل من غيرها
-                        SJFp_copy_Processes = RemoveProcess(SJFp_copy_Processes, ProcessToRemove);
+                        SJFp_copy_Processes = ProcessNameToEqualMinus1(SJFp_copy_Processes, ProcessToRemove);
+                        //SortedProcesses[i, 2] = currentTime;
                     }
-                    if (SJFp_copy_Processes.GetLength(0) != 1 && SortedProcesses[i, 2] > 1)
+                    if (SJFp_copy_Processes.GetLength(0) != 1 && SortedProcesses[i, 2] >= 1 
+                        && SJFp_copy_Processes[ProcessToSubtract,2] >= 1)
                     {
-                        SJFp_copy_Processes[i, 2]--;
-                        SortedProcesses[i, 2]--;
+                        
+                        SJFp_copy_Processes = SubtractOneFromProcess(SJFp_copy_Processes, ProcessToSubtract);
+                        SortedProcesses[i, 2] = currentTime;
                     }
 
-                    //i++;
+                    ProcessesFinished = true;
+                    for (int j = 0; j < n; j++)
+                    {
+                        if (SJFp_copy_Processes[j, 0] == -1)
+                        {
+                            continue;
+                        }
+                        else
+                        {
+                            ProcessesFinished = false;
+                            break;
+                        }
+                    }
 
+                    if(ProcessesFinished)
+                    {
+                        break;
+                    }
+                    else
+                    {
+                        continue;
+                    }
                 }
             }
 
-            int processCount = SortedProcesses.GetLength(0);
+            for (int i = 0; i < SortedProcesses.GetLength(0); i++)
+            {
+                if (SortedProcesses[i, 2] != 0)
+                {
+                    LastProcessesNumber++;
+                }
+            }
+
+            RealSortedProcesses = new int[LastProcessesNumber, 3];
+
+            for (int i = 0; i < RealSortedProcesses.GetLength(0); i++)
+            {
+                if (SortedProcesses[i, 2] != 0)
+                {
+                    RealSortedProcesses[i, 0] = SortedProcesses[i, 0];
+                    RealSortedProcesses[i, 1] = SortedProcesses[i, 1];
+                    RealSortedProcesses[i, 2] = SortedProcesses[i, 2];
+                }
+            }
+
+            int processCount = RealSortedProcesses.GetLength(0);
 
             // إنشاء مصفوفة لحفظ أسماء العمليات في الترتيب الجديد
             string[] processNames = new string[processCount];
@@ -491,7 +574,7 @@ namespace OS_Project_2
             // حفظ أسماء العمليات في الترتيب الجديد
             for (int i = 0; i < processCount; i++)
             {
-                processNames[i] = "Process " + SortedProcesses[i, 0].ToString(); //$"{i}";
+                processNames[i] = "Process " + RealSortedProcesses[i, 0].ToString(); //$"{i}";
             }
 
             SchedulerTable.Controls.Clear();

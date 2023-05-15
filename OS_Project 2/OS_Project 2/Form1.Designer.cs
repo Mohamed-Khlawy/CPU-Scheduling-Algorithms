@@ -175,17 +175,19 @@
             // 
             // SchedulerTable
             // 
-            this.SchedulerTable.ColumnCount = 2;
-            this.SchedulerTable.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 20F));
-            this.SchedulerTable.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 20F));
-            this.SchedulerTable.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 20F));
-            this.SchedulerTable.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 20F));
-            this.SchedulerTable.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 20F));
-            this.SchedulerTable.Location = new System.Drawing.Point(873, 103);
+            this.SchedulerTable.ColumnCount = 6;
+            this.SchedulerTable.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle());
+            this.SchedulerTable.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle());
+            this.SchedulerTable.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle());
+            this.SchedulerTable.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle());
+            this.SchedulerTable.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle());
+            this.SchedulerTable.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle());
+            this.SchedulerTable.Location = new System.Drawing.Point(12, 569);
             this.SchedulerTable.Name = "SchedulerTable";
             this.SchedulerTable.RowCount = 1;
             this.SchedulerTable.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
-            this.SchedulerTable.Size = new System.Drawing.Size(351, 49);
+            this.SchedulerTable.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 20F));
+            this.SchedulerTable.Size = new System.Drawing.Size(1900, 49);
             this.SchedulerTable.TabIndex = 11;
             // 
             // label1
@@ -237,7 +239,7 @@
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 16F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(1469, 509);
+            this.ClientSize = new System.Drawing.Size(1924, 662);
             this.Controls.Add(this.IdealInformation);
             this.Controls.Add(this.AvgTurnaround);
             this.Controls.Add(this.AvgWaiting);

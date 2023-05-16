@@ -31,6 +31,33 @@ namespace OS_Project_2
             IdealInformation.Text = "Information about CPU Ideal Time";
         }
 
+        private void RemoveAndPushProcess(int[,] processes)
+        {
+            int numRows = processes.GetLength(0);
+            int numCols = processes.GetLength(1);
+
+            int processName = processes[0, 0];
+            int processArrival = processes[0, 1];
+            int processBrust = processes[0, 2];
+
+            // Shift the rows up by one position
+            for (int i = 1; i < numRows; i++)
+            {
+                for (int j = 0; j < numCols; j++)
+                {
+                    processes[i - 1, j] = processes[i, j];
+                }
+            }
+
+            // Assign the values of the first row to the last row
+            //for (int j = 0; j < numCols; j++)
+            //{
+            processes[numRows - 1, 0] = processName;
+            processes[numRows - 1, 1] = processArrival;
+            processes[numRows - 1, 2] = processBrust;
+            //}
+        }
+
         private int[,] ProcessNameToEqualMinus1(int[,]processes, int rowIndex)
         {
             for (int x = 0; x < processes.GetLength(0); x++)
@@ -111,25 +138,6 @@ namespace OS_Project_2
                     processes[i, 1] = tempArrival;
                     processes[i, 2] = tempBurst;
                 }
-            }
-        }
-
-        private void ArrivedProcesses_AtThis_CurrentTime(int[,]processes,int currentTime)
-        {
-            int[,] arrivedProcesses = new int[processes.GetLength(0), 3];
-            int n = processes.GetLength(0);
-            int z = 0;
-
-            for (int i = 0; i < n; i++)
-            {
-                if (processes[i, 1] <= currentTime)
-                {
-                    arrivedProcesses[z, 0] = processes[i, 0];
-                    arrivedProcesses[z, 1] = processes[i, 1];
-                    arrivedProcesses[z, 2] = processes[i, 2];
-                    z++;
-                }
-
             }
         }
 
@@ -925,13 +933,193 @@ namespace OS_Project_2
             }
         }
         
+        
         private void btnRR_Click(object sender, EventArgs e)
         {
             Reset_Scheduler();
+
+            int[,] RR_copy_Processes = processes;
+            int[,] Backup_RR_copy_Processes = (int[,])processes.Clone();
+            int[,] Updated_RR_copy_Processes = new int[30, 3];
+            int[,] Last_Updated_RR_copy_Processes;
+            int Quantum = int.Parse(txtQuantum.Text);
+            int n = RR_copy_Processes.GetLength(0);
+            SortByArrivalTime(RR_copy_Processes);
+            int CurrentTime = RR_copy_Processes[0, 1];
+            int i = 0;
+            int processCounter = 0;
+            int numberOfIdealTime = 0;
+            bool ProcessesFinished;
+
+            if (RR_copy_Processes[0, 1] != 0)
+            {
+                numberOfIdealTime++;
+                IdealInformation.Text += "\n 1 => Before P0";
+            }
+
+            while (true)
+            {
+                if (RR_copy_Processes[0, 2] > 0)
+                {
+                    Updated_RR_copy_Processes[i, 0] = RR_copy_Processes[0, 0];
+                    Updated_RR_copy_Processes[i, 1] = CurrentTime;
+                    if (RR_copy_Processes[0, 2] >= Quantum)
+                    {
+                        Updated_RR_copy_Processes[i, 2] = CurrentTime + Quantum;
+                        RR_copy_Processes[0, 2] -= Quantum;
+                        CurrentTime += Quantum;
+                        processCounter++;
+                    }
+                    else
+                    {
+                        Updated_RR_copy_Processes[i, 2] = CurrentTime + RR_copy_Processes[0,2];
+                        CurrentTime += RR_copy_Processes[0, 2];
+                        RR_copy_Processes[0, 2] -= RR_copy_Processes[0,2];
+                        processCounter++;
+                    }
+                }
+                i++;
+                RemoveAndPushProcess(RR_copy_Processes);
+                ProcessesFinished = true;
+                for (int j = 0; j < RR_copy_Processes.GetLength(0); j++)
+                {
+                    if (RR_copy_Processes[j, 2] <= 0)
+                    {
+                        continue;
+                    }
+                    else
+                    {
+                        ProcessesFinished = false;
+                        break;
+                    }
+                }
+
+                if (ProcessesFinished)
+                {
+                    break;
+                }
+                else
+                {
+                    continue;
+                }
+            }
+
+
+
+            Last_Updated_RR_copy_Processes = new int[processCounter, 3];
+            int index = 0;
+            for (int j = 0; j < Updated_RR_copy_Processes.GetLength(0); j++)
+            {
+                if (Updated_RR_copy_Processes[j, 2] > 0)
+                {
+                    Last_Updated_RR_copy_Processes[index, 0] = Updated_RR_copy_Processes[j, 0];
+                    Last_Updated_RR_copy_Processes[index, 1] = Updated_RR_copy_Processes[j, 1];
+                    Last_Updated_RR_copy_Processes[index, 2] = Updated_RR_copy_Processes[j, 2];
+                    index++;
+                }
+            }
+
+            int processCount = Last_Updated_RR_copy_Processes.GetLength(0);
+
+            // إنشاء مصفوفة لحفظ أسماء العمليات في الترتيب الجديد
+            string[] processNames = new string[processCount];
+
+            // حفظ أسماء العمليات في الترتيب الجديد
+            for (int x = 0; x < processCount; x++)
+            {
+                processNames[x] = "Process " + Last_Updated_RR_copy_Processes[x, 0].ToString(); //$"{i}";
+            }
+
+            SchedulerTable.Controls.Clear();
+
+            SchedulerTable.ColumnCount = processCount;
+            SchedulerTable.RowCount = 1;
+
+            
+            // إضافة الـ Labels للـ TableLayoutPanel على أساس الترتيب الجديد
+            for (int x = 0; x < processCount; x++)
+            {
+                Label label = new Label();
+                label.Text = processNames[x];
+                //label.Dock = DockStyle.Fill;
+                label.TextAlign = ContentAlignment.MiddleCenter;
+                SchedulerTable.Controls.Add(label, x, 0);
+            }
+
+            // حساب waitingTime و finishTime و turnAround لكل عملية
+            int n_Sorted = Last_Updated_RR_copy_Processes.GetLength(0);
+            int[] waitingTime = new int[n];
+            int[] finishTime = new int[n];
+            int[] turnAroundTime = new int[n];
+            int[] ProcessCounter = new int[n];
+            int counter_Sorted = 0;
+
+            waitingTime[0] = 0;
+            finishTime[0] = Last_Updated_RR_copy_Processes[1, 1];
+            ProcessCounter[0]++;
+
+            for (int z = 1; z < n_Sorted; z++)
+            {
+
+                if ((finishTime[Last_Updated_RR_copy_Processes[z - 1, 0]] + counter_Sorted) 
+                    >= Last_Updated_RR_copy_Processes[z, 1])
+                {
+                    if (ProcessCounter[Last_Updated_RR_copy_Processes[z, 0]] == 0)
+                    {
+                        waitingTime[Last_Updated_RR_copy_Processes[z, 0]] = finishTime[Last_Updated_RR_copy_Processes[z - 1, 0]]
+                        - Backup_RR_copy_Processes[Last_Updated_RR_copy_Processes[z, 0], 1];
+                        finishTime[Last_Updated_RR_copy_Processes[z, 0]] = Last_Updated_RR_copy_Processes[z, 2];
+                        ProcessCounter[Last_Updated_RR_copy_Processes[z, 0]]++;
+                    }
+                    else
+                    {
+                        waitingTime[Last_Updated_RR_copy_Processes[z, 0]] += finishTime[Last_Updated_RR_copy_Processes[z - 1, 0]]
+                        - finishTime[Last_Updated_RR_copy_Processes[z, 0]];
+                        finishTime[Last_Updated_RR_copy_Processes[z, 0]] = Last_Updated_RR_copy_Processes[z, 2];
+                        ProcessCounter[Last_Updated_RR_copy_Processes[z, 0]]++;
+                    }
+                }
+
+                else
+                {
+                    counter_Sorted += Last_Updated_RR_copy_Processes[z, 1] - finishTime[Last_Updated_RR_copy_Processes[z - 1, 0]];
+                    z--;
+                    numberOfIdealTime++;
+                    IdealInformation.Text += $"\n {numberOfIdealTime} " +
+                        $"=> Between P{Last_Updated_RR_copy_Processes[z, 0]} " +
+                        $"and P{Last_Updated_RR_copy_Processes[z + 1, 0]}";
+                }
+
+
+            }
+
+            for (int z = 0; z < n; z++)
+            {
+                turnAroundTime[z]
+                    = finishTime[z] - RR_copy_Processes[z, 1];
+            }
+
+            // حساب متوسط ​​وقت الانتظار لجميع العمليات
+            double avgWaitingTime = waitingTime.Average();
+            double avgTurnaroundTime = turnAroundTime.Average();
+
+            AvgWaiting.Text = avgWaitingTime.ToString() + "ms";
+            AvgTurnaround.Text = avgTurnaroundTime.ToString() + "ms";
+            if (numberOfIdealTime != 0)
+            {
+                IdealInformation.Text += $"\n Total Ideal Times = {numberOfIdealTime.ToString()}";
+            }
+            else
+            {
+                IdealInformation.Text += "\n There Is No Ideal Times!!";
+            }
+
         }
 
         private void txtQuantum_TextChanged(object sender, EventArgs e)
         {
+            Reset_Scheduler();
+
             if (string.IsNullOrWhiteSpace(txtQuantum.Text)) // التحقق مما إذا كانت القيمة في TextBox فارغة أو تحتوي على مسافات فقط
             {
                 btnRR.Enabled = false; // تعطيل الزر
